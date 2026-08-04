@@ -224,6 +224,33 @@ try {
     }
   });
 
+  await scenario("command source defaults to command and forwards to the display", async () => {
+    const { helper, routes, sent } = loadHelper();
+    reportPages(helper);
+    const omitted = await dispatch(routes, "POST", "/MMM-AgentSurface/api/control", fakeRequest({ headers: authHeaders(), body: { command: "next" } }));
+    assert.equal(omitted.statusCode, 200);
+    assert.equal(sent.at(-1).payload.source, "command", "omitted source must default to command");
+    const voice = await dispatch(routes, "POST", "/MMM-AgentSurface/api/control", fakeRequest({ headers: authHeaders(), body: { command: "show", pageId: "weather", source: " VOICE " } }));
+    assert.equal(voice.statusCode, 200);
+    assert.equal(voice.body.accepted.source, "voice", "source must be trimmed/lowercased");
+    assert.equal(sent.at(-1).payload.source, "voice");
+    const remote = await dispatch(routes, "POST", "/MMM-AgentSurface/api/control", fakeRequest({ headers: authHeaders(), body: { command: "pause", source: "remote" } }));
+    assert.equal(remote.statusCode, 200);
+    assert.equal(sent.at(-1).payload.source, "remote");
+  });
+
+  await scenario("unknown command sources fail closed without emitting controls", async () => {
+    const { helper, routes, sent } = loadHelper();
+    reportPages(helper);
+    const before = sent.length;
+    for (const bad of ["alexa", "", 7, { source: "voice" }]) {
+      const res = await dispatch(routes, "POST", "/MMM-AgentSurface/api/control", fakeRequest({ headers: authHeaders(), body: { command: "next", source: bad } }));
+      assert.equal(res.statusCode, 400, `source ${JSON.stringify(bad)} must be rejected`);
+      assert.match(res.body.errors[0], /source must be one of: command, remote, voice/);
+    }
+    assert.equal(sent.length, before, "rejected sources must not emit socket controls");
+  });
+
   await scenario("http methods are enforced per route", async () => {
     const { routes } = loadHelper();
     const wrongMethodOnControl = await dispatch(routes, "GET", "/MMM-AgentSurface/api/control", fakeRequest({ headers: authHeaders() }));

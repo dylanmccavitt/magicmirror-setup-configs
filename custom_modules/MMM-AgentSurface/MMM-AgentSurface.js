@@ -154,17 +154,18 @@ Module.register("MMM-AgentSurface", {
   applyControlCommand: function (payload) {
     if (!this.shell) return;
     var command = payload && payload.command;
+    var source = payload && (payload.source === "voice" || payload.source === "remote" || payload.source === "command") ? payload.source : "command";
 
     if (command === "next") {
-      this.shell.next("command");
+      this.shell.next(source);
     } else if (command === "previous") {
-      this.shell.prev("command");
+      this.shell.prev(source);
     } else if (command === "show") {
-      this.shell.jump(payload && payload.pageId, "command");
+      this.shell.jump(payload && payload.pageId, source);
     } else if (command === "pause") {
-      this.shell.pause("command");
+      this.shell.pause(source);
     } else if (command === "resume") {
-      this.shell.resume("command");
+      this.shell.resume(source);
     } else {
       return;
     }
@@ -1042,8 +1043,12 @@ Module.register("MMM-AgentSurface", {
     control.appendChild(phone);
     var voice = document.createElement("div");
     voice.className = "ctrl-hint";
-    voice.textContent = "voice  not wired";
+    voice.textContent = "voice  siri shortcuts";
     control.appendChild(voice);
+    var lastCmd = document.createElement("div");
+    lastCmd.className = "ctrl-hint";
+    lastCmd.textContent = "last cmd  " + (this.shell ? this.shell.state().lastCommandSource : "system");
+    control.appendChild(lastCmd);
     sidebar.appendChild(control);
 
     panel.appendChild(sidebar);

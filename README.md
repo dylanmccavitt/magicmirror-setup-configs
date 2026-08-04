@@ -92,7 +92,7 @@ Environment/source names:
 - `MIRROR_INGEST_TOKEN` — bearer token used by the upload client and Vercel ingest API
 - `MIRROR_LOCAL_UPLOAD_TOKEN` — optional bearer token accepted by the local `MMM-AgentSurface` upload endpoint
 - `MIRROR_AGENT_PROJECT` — optional project label for collected agent work; defaults to `Magic Mirror Agent Surface`
-- `MIRROR_CONTROL_TOKEN` — bearer token required by the local page-control API and the phone remote at `GET /MMM-AgentSurface/remote` (a static shell with no data or token material baked in; the token is entered on the phone). Fails closed without it; endpoint details in [docs/api.md](docs/api.md). LAN-only by default — do not port-forward the mirror publicly.
+- `MIRROR_CONTROL_TOKEN` — bearer token required by the local page-control API, the phone remote at `GET /MMM-AgentSurface/remote` (a static shell with no data or token material baked in; the token is entered on the phone), and the Siri Shortcuts voice commands ([docs/voice.md](docs/voice.md)). Fails closed without it; endpoint details in [docs/api.md](docs/api.md). LAN-only by default — do not port-forward the mirror publicly.
 - `mirrorOs.home.label` — optional household display label configured in `mirror-config/config.js`; display-only text for the Home page, not a secret or data source
 - `MIRROR_CALENDAR_ICS_URL` — calendar ICS feed URL (Apple/Google shared or private ICS links work); calendar stays `unconfigured` until this is set. Optional: `MIRROR_CALENDAR_NAME` (display label), `MIRROR_CALENDAR_TIMEZONE` (IANA zone for event times). Feed URLs are never echoed in errors or on screen.
 - `MIRROR_WEATHER_LATITUDE` and `MIRROR_WEATHER_LONGITUDE` — Open-Meteo coordinate source; weather stays `unconfigured` until both are set. Optional: `MIRROR_WEATHER_TIMEZONE` (IANA zone or Open-Meteo timezone value), `MIRROR_WEATHER_LOCATION_LABEL` (display/source label).
@@ -116,7 +116,7 @@ Health checks:
 The next build should make the mirror an agent surface, not a generic dashboard:
 
 - Agent threads: show live or recent agent/session threads, statuses, blockers, and outputs.
-- Voice: local wake/listen/speak controls for asking the mirror about threads or triggering actions.
+- Voice: page-navigation voice commands are wired through Siri Shortcuts against the page-control API ([docs/voice.md](docs/voice.md)); hands-free wake-word control at the mirror is tracked separately.
 - Movement sensor: presence-aware wake/sleep, glance mode, and full detail mode.
 - Agent bus: one local service should broker state between MagicMirror modules, agent/thread sources, voice, and sensors so UI modules stay dumb.
 

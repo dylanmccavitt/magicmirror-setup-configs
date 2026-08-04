@@ -8,6 +8,7 @@ const providers = require("./providers/index.js");
 const CONTROL_ROUTE_BASE = "/MMM-AgentSurface/api/control";
 const REMOTE_ROUTE = "/MMM-AgentSurface/remote";
 const CONTROL_COMMANDS = new Set(["next", "previous", "show", "pause", "resume"]);
+const CONTROL_SOURCES = new Set(["command", "remote", "voice"]);
 const PAGE_IDS = new Set(shellApi.FALLBACK_ROTATION_ORDER);
 const SAFE_STATE = {
   currentPageId: "home",
@@ -22,15 +23,20 @@ function controlToken() {
 function readControlCommand(body, configuredPages) {
   const command = body && typeof body.command === "string" ? body.command.trim().toLowerCase() : "";
   if (!CONTROL_COMMANDS.has(command)) return { ok: false, statusCode: 400, error: "command must be one of: next, previous, show, pause, resume" };
+  let source = "command";
+  if (body && body.source !== undefined && body.source !== null) {
+    source = typeof body.source === "string" ? body.source.trim().toLowerCase() : "";
+    if (!CONTROL_SOURCES.has(source)) return { ok: false, statusCode: 400, error: "source must be one of: command, remote, voice" };
+  }
   if (command === "show") {
     if (!configuredPages || configuredPages.size === 0) {
       return { ok: false, statusCode: 503, error: "page registry not reported by display module yet" };
     }
     const pageId = body && typeof body.pageId === "string" ? body.pageId.trim().toLowerCase() : "";
     if (!configuredPages.has(pageId)) return { ok: false, statusCode: 400, error: "pageId must be one of: " + Array.from(configuredPages).join(", ") };
-    return { ok: true, command, pageId };
+    return { ok: true, command, pageId, source };
   }
-  return { ok: true, command };
+  return { ok: true, command, source };
 }
 
 function safeConfiguredPages(value) {
@@ -235,6 +241,7 @@ module.exports = NodeHelper.create({
     const payload = {
       command: parsed.command,
       pageId: parsed.pageId || null,
+      source: parsed.source,
       requestId: requestId()
     };
     this.sendSocketNotification("MMM_AGENT_SURFACE_CONTROL", payload);

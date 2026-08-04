@@ -29,11 +29,12 @@ Auth: `MIRROR_CONTROL_TOKEN` (see above). Body: JSON, max 1 MiB.
 Request:
 
 ```json
-{ "command": "next" | "previous" | "show" | "pause" | "resume", "pageId": "weather" }
+{ "command": "next" | "previous" | "show" | "pause" | "resume", "pageId": "weather", "source": "voice" }
 ```
 
 - `command` is case-insensitive and trimmed; anything else → **400** `command must be one of: next, previous, show, pause, resume`.
 - `pageId` is required for `show` only (also case-insensitive/trimmed) and is validated against the page set the display module actually reported — not the fallback order. Unknown page → **400** `pageId must be one of: <reported pages>`.
+- `source` is optional (case-insensitive/trimmed) and must be one of `command`, `remote`, `voice` when present; anything else → **400** `source must be one of: command, remote, voice`. Omitted → `command`. The phone remote sends `remote`; the Siri Shortcuts voice adapter ([voice.md](voice.md)) sends `voice`. The accepted source flows through to `state.lastCommandSource` once the display applies the command.
 - `show` before the display module has reported its registry → **503** `page registry not reported by display module yet`.
 
 Success — **200**:
@@ -41,7 +42,7 @@ Success — **200**:
 ```json
 {
   "ok": true,
-  "accepted": { "command": "show", "pageId": "weather", "requestId": "<base36 timestamp>-<random>" },
+  "accepted": { "command": "show", "pageId": "weather", "source": "voice", "requestId": "<base36 timestamp>-<random>" },
   "state": { "currentPageId": "home", "rotationPaused": false, "lastCommandSource": "system" }
 }
 ```
@@ -63,7 +64,7 @@ Auth: `MIRROR_CONTROL_TOKEN`. Success — **200**:
 ```
 
 - `state.currentPageId` — one of the module's known page ids (`home`, `agents`, `calendar`, `weather`, `path`, `sports`); unknown values sanitize to `home`.
-- `state.lastCommandSource` — free string from the display module (`system` default, `command`, `rotation`, ...).
+- `state.lastCommandSource` — free string from the display module (`system` default, `command`, `rotation`, or a control-POST `source`: `remote`, `voice`).
 - `pages` — the registry the display module reported, in rotation order, with labels from `mirror-os-shell.js` `PAGE_LABELS`. **`null` until the display module has reported** (roughly the first 5–10 s after page load); clients must render fail-closed on `null`.
 
 Errors: **401** / **503** as above.

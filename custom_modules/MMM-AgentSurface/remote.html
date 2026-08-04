@@ -228,6 +228,7 @@
 
   async function sendCommand(payload) {
     if (!token) return;
+    payload.source = "remote";
     var response;
     try {
       response = await fetch(API_BASE, {
